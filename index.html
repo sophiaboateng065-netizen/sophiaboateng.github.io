@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Dream House</title>
+  <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
+  <script src="https://unpkg.com/aframe-physics-system@4.2.2/dist/aframe-physics-system.min.js"></script>
+  <style>
+    body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; }
+  </style>
+</head>
+<body>
+
+  <a-scene
+    background="color: #000"
+    vr-mode-ui="enabled: false"
+    embedded
+    renderer="antialias: true; colorManagement: true; physicallyCorrectLights: true"
+    inspector="enabled: false">
+
+    <!-- Villa model -->
+    <a-entity
+      id="villa"
+      gltf-model="model/meine_villa/scene.glb"
+      position="0 -0.5 -2"
+      rotation="0 180 0"
+      scale="1.4 1.4 1.4"
+      visible="false"
+      animation__fadein="property: visible; to: true; dur: 500; easing: easeInSine">
+    </a-entity>
+
+    <!-- Lamborghini car -->
+    <a-entity
+      gltf-model="model/2021_lamborghini_countach_lpi_800-4/scene.glb"
+      position="-4 0.6 4"
+      rotation="0 90 0"
+      scale="0.5 0.5 0.5">
+    </a-entity>
+
+    <!-- =============================================
+         SWIMMING POOL  —  parent position: 15 0 20
+    ============================================= -->
+    <a-entity position="15 0 20">
+
+      <!-- ── POOL BODY (the concrete shell) ──
+           A tall box that forms the entire pool basin.
+           Height 1.2 so it has real depth.
+           The water will sit INSIDE this box.
+      -->
+      <a-box
+        position="0 -0.3 0"
+        width="10.4" height="1.2" depth="6.4"
+        color="#c8d8e8">
+      </a-box>
+
+      <!-- ── POOL INNER FLOOR (the tiled bottom) ──
+           Sits at the very bottom of the basin, visible through the water.
+           Light blue tile colour.
+      -->
+      <a-box
+        position="0 0.1 0"
+        width="9.8" height="0.05" depth="5.8"
+        color="#a8d8ea">
+      </a-box>
+
+      <!-- ── POOL DECK / SURROUND ──
+           The flat white/cream coping around the pool edge.
+           Sits at y=0.6 — same level as top of walls.
+      -->
+      <!-- Front deck -->
+      <a-box position="0 0.6 -3.5"   width="11.4" height="0.12" depth="1.0" color="#e8e0d0"></a-box>
+      <!-- Back deck -->
+      <a-box position="0 0.6 3.5"    width="11.4" height="0.12" depth="1.0" color="#e8e0d0"></a-box>
+      <!-- Left deck -->
+      <a-box position="-5.5 0.6 0"   width="1.0"  height="0.12" depth="6.4" color="#e8e0d0"></a-box>
+      <!-- Right deck -->
+      <a-box position="5.5 0.6 0"    width="1.0"  height="0.12" depth="6.4" color="#e8e0d0"></a-box>
+
+      <!-- ── POOL WALLS (white interior walls, visible above water level) ── -->
+      <a-box position="0 0.5 -3"   width="10"  height="0.5" depth="0.2" color="#ecf0f1"></a-box>
+      <a-box position="0 0.5 3"    width="10"  height="0.5" depth="0.2" color="#ecf0f1"></a-box>
+      <a-box position="-5 0.5 0"   width="0.2" height="0.5" depth="6"   color="#ecf0f1"></a-box>
+      <a-box position="5 0.5 0"    width="0.2" height="0.5" depth="6"   color="#ecf0f1"></a-box>
+
+      <!-- ── POOL STAIRS (3 steps going into the water) ── -->
+      <a-box position="0 0.25 -2"   width="3"   height="0.1" depth="0.8" color="#ecf0f1"></a-box>
+      <a-box position="0 0.45 -2.4" width="2.6" height="0.1" depth="0.6" color="#ecf0f1"></a-box>
+      <a-box position="0 0.65 -2.7" width="2.2" height="0.1" depth="0.5" color="#ecf0f1"></a-box>
+
+      <!-- ── LADDER (right side of pool) ── -->
+      <a-cylinder position="4.6 0.9 2.5"  radius="0.05" height="1.4" color="#aaaaaa"></a-cylinder>
+      <a-cylinder position="4.85 0.9 2.5" radius="0.05" height="1.4" color="#aaaaaa"></a-cylinder>
+      <a-box position="4.72 0.55 2.5" width="0.35" height="0.05" depth="0.05" color="#aaaaaa"></a-box>
+      <a-box position="4.72 0.75 2.5" width="0.35" height="0.05" depth="0.05" color="#aaaaaa"></a-box>
+      <a-box position="4.72 0.95 2.5" width="0.35" height="0.05" depth="0.05" color="#aaaaaa"></a-box>
+
+      <!-- ── ANIMATED WATER — injected by JavaScript below ──
+           Water sits at y=0.45, which is BELOW the top of the walls (y=0.6)
+           This makes the water look like it's contained INSIDE the pool.
+      -->
+      <a-entity id="pool-water-entity" pool-water></a-entity>
+
+    </a-entity>
+    <!-- END SWIMMING POOL -->
+
+    <!-- Scene lighting — original two lights only, no extra pool lights -->
+    <a-entity light="type: ambient; color: #ffffff; intensity: 0.8"></a-entity>
+    <a-entity light="type: directional; color: #ffffff; intensity: 1" position="0 5 5"></a-entity>
+
+    <!-- Player camera -->
+    <a-entity id="rig" position="0 1.6 6" rotation="0 180 0">
+      <a-entity
+        camera="fov: 70"
+        look-controls="pointerLockEnabled: true"
+        wasd-controls="acceleration: 10"
+        position="0 0 0">
+      </a-entity>
+    </a-entity>
+
+    <!-- Ground -->
+    <a-entity
+      position="0 0 0"
+      geometry="primitive: plane; width: 200; height: 200"
+      rotation="-90 0 0"
+      material="color: #444; metalness: 0.2; roughness: 1">
+    </a-entity>
+
+  </a-scene>
+
+
+  <script>
+
+    
+
+    AFRAME.registerComponent('pool-water', {
+
+      /* ---------------------------------------------------
+         init() — runs ONCE when the page loads.
+         Builds the water mesh and places it in the scene.
+      --------------------------------------------------- */
+      init: function () {
+
+        var THREE = window.THREE;
+
+        // ── STEP 1: Create a flat grid for the water surface ──
+        // Size: 9.6 wide x 5.6 deep (fits neatly inside the pool walls)
+        // Segments: 40x40 grid of small squares — more = smoother waves
+        var geometry = new THREE.PlaneGeometry(9.6, 5.6, 40, 40);
+
+        // Rotate flat (horizontal) — PlaneGeometry is vertical by default
+        geometry.rotateX(-Math.PI / 2);
+
+        // ── STEP 2: Save the original Y (height) of every vertex ──
+        // We animate FROM these original positions every frame
+        var positions = geometry.attributes.position;
+        this.originalY = [];
+        for (var i = 0; i < positions.count; i++) {
+          this.originalY[i] = positions.getY(i);
+        }
+        this.geometry = geometry; // save so tick() can access it
+
+        // ── STEP 3: Create the water material ──
+        // The water colour is a rich deep blue so it looks full of water
+        var material = new THREE.MeshStandardMaterial({
+          color:       0x006994,  // deep ocean blue — looks like real pool water
+          transparent: true,      // allow see-through
+          opacity:     0.82,      // mostly solid — you can barely see the floor through it
+          roughness:   0.05,      // very smooth surface = shiny like water
+          metalness:   0.1        // slight reflectiveness
+        });
+        this.material = material;
+
+        // ── STEP 4: Make the mesh (geometry + material combined) ──
+        var waterMesh = new THREE.Mesh(geometry, material);
+
+        // KEY FIX: Place water at y=0.45
+        // Pool wall tops are at y=0.6
+        // So water is 0.15 BELOW the wall tops = looks contained inside the pool
+        waterMesh.position.set(0, 0.45, 0);
+
+        // ── STEP 5: Attach the mesh to the A-Frame entity ──
+        this.el.setObject3D('water', waterMesh);
+      },
+
+
+      /* ---------------------------------------------------
+         tick() — runs EVERY FRAME (~60 times per second).
+         This is the animation loop. Move the water here.
+      --------------------------------------------------- */
+      tick: function (time) {
+
+        // Convert time from milliseconds to seconds
+        var t = time / 1000;
+
+        var positions = this.geometry.attributes.position;
+
+        // ── Loop through every vertex and apply wave motion ──
+        for (var i = 0; i < positions.count; i++) {
+
+          var x = positions.getX(i); // horizontal position of this vertex
+          var z = positions.getZ(i); // depth position of this vertex
+
+          // ── THREE WAVES ADDED TOGETHER ──
+          //
+          // Each wave = Math.sin(position * frequency + time * speed) * height
+          //
+          // wave1: travels left to right across the pool
+          var wave1 = Math.sin(x * 1.5 + t * 1.8) * 0.035;
+
+          // wave2: travels front to back across the pool
+          var wave2 = Math.sin(z * 2.0 + t * 2.2) * 0.025;
+
+          // wave3: travels diagonally for a natural choppy look
+          var wave3 = Math.sin((x + z) * 1.0 + t * 1.4) * 0.018;
+
+          // Final Y position = original position + all three waves
+          positions.setY(i, this.originalY[i] + wave1 + wave2 + wave3);
+        }
+
+        // Tell Three.js the vertex positions changed — must do this every frame
+        positions.needsUpdate = true;
+
+        // Recalculate surface normals so the lighting looks correct on the waves
+        this.geometry.computeVertexNormals();
+
+        // ── Gently pulse the opacity (simulates light shimmering on water) ──
+        // Oscillates between 0.75 and 0.89
+        this.material.opacity = 0.82 + Math.sin(t * 1.8) * 0.07;
+      },
+
+
+      /* ---------------------------------------------------
+         remove() — cleanup when the component is removed.
+      --------------------------------------------------- */
+      remove: function () {
+        this.el.removeObject3D('water');
+        this.geometry.dispose();
+        this.material.dispose();
+      }
+
+    }); // end registerComponent
+
+
+    /* ====================================================
+       KEYBOARD CONTROLS
+       Arrow Up   = raise camera (climb up)
+       Arrow Down = lower camera (go down)
+    ==================================================== */
+    document.addEventListener('DOMContentLoaded', function () {
+      var rig = document.getElementById('rig');
+
+      document.addEventListener('keydown', function (e) {
+        var pos = rig.getAttribute('position');
+
+        if (e.key === 'ArrowUp') {
+          rig.setAttribute('position', { x: pos.x, y: pos.y + 0.1, z: pos.z });
+        }
+        if (e.key === 'ArrowDown') {
+          rig.setAttribute('position', { x: pos.x, y: Math.max(1.6, pos.y - 0.1), z: pos.z });
+        }
+      });
+    });
+
+  </script>
+</body>
+</html>
